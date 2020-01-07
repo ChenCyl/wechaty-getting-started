@@ -18,6 +18,7 @@
  *
  */
 const qrTerm = require('qrcode-terminal')
+const runOps = require('./game')
 
 const {
   IoClient,
@@ -85,7 +86,22 @@ bot
  */
 
 let busyIndicator    = false
-let busyAnnouncement = `Automatic Reply: I cannot read your message because I'm busy now, will talk to you when I get back.`
+let busyAnnouncement = `[自动回复] 你好，短期内无法回复你的消息，若有急事请电话联系，抱歉。\n[Auto Reply] Hey, this is a game. Say Yahaha!`
+let gameMap = {
+  'START': '=== 游戏开始 ===\n' +
+          '起始位置：(2, 4)\n' + 
+          '终点位置：(0, 0)\n' +
+          '上下左右：wsad\n' + 
+          '剩余生命：3',
+  'WIN': 'YOU WIN !!! :) 期待一下奖品吧红红火火恍恍惚惚',
+  'LOSE': 'GAME OVER :(',
+  GAMING: function ({life, cx, cy}) {
+    return `当前位置：(${cx}, ${cy})\n` +
+           `剩余生命：${life}`
+  }
+}
+const passwords = ['yahaha', 'yahaha!', 'yahaha！']
+let startedSenders = {}
 
 bot.on('message', async function(msg) {
   log.info('Bot', '(message) %s', msg)
@@ -94,7 +110,7 @@ bot.on('message', async function(msg) {
 
   const sender   = msg.from()
   const receiver = msg.to()
-  const text     = msg.text()
+  const text     = msg.text().toLowerCase()
   const room     = msg.room()
 
   // if (msg.age() > 60) {
@@ -145,12 +161,43 @@ bot.on('message', async function(msg) {
   if (msg.self()) {
     return
   }
-
   /**
    * 1. Send busy anoncement to contact
    */
+  // console.log(sender)
   if (!room) {
-    await msg.say(busyAnnouncement)
+    // 游戏已开始
+    if (startedSenders.hasOwnProperty(sender.id)) {
+      if (startedSenders[sender.id].win) {
+        await msg.say('赢了就别来找我了')
+        return 
+      }
+      let res = runOps(text, startedSenders[sender.id].cx, startedSenders[sender.id].cy)
+      if (res.win) {
+        startedSenders[sender.id].win = true
+        await msg.say(gameMap.WIN)
+      } else if (startedSenders[sender.id].life <= res.lostLife) {
+        await msg.say(gameMap.LOSE) // TODO:
+        delete startedSenders[sender.id]
+      } else {
+        startedSenders[sender.id].cx = res.cx
+        startedSenders[sender.id].cy = res.cy
+        startedSenders[sender.id].life -= res.lostLife
+        await msg.say(gameMap.GAMING(startedSenders[sender.id])) // TODO:
+      }
+    // 触发游戏开始口令
+    } else if (passwords.includes(text)) {
+      startedSenders[sender.id] = {
+        cx: 2,
+        cy: 4,
+        life: 3,
+        win: false
+      }
+      await msg.say(gameMap.START)
+    // 未触发开始游戏
+    } else {
+      await msg.say(busyAnnouncement)
+    }
     return
   }
 
@@ -158,11 +205,11 @@ bot.on('message', async function(msg) {
    * 2. If there's someone mentioned me in a room,
    *  then send busy annoncement to room and mention the contact who mentioned me.
    */
-  const contactList = await msg.mention()
-  const contactIdList = contactList.map(c => c.id)
-  if (contactIdList.includes(this.userSelf().id)) {
-    await msg.say(busyAnnouncement, sender)
-  }
+  // const contactList = await msg.mention()
+  // const contactIdList = contactList.map(c => c.id)
+  // if (contactIdList.includes(this.userSelf().id)) {
+  //   await msg.say(busyAnnouncement, sender)
+  // }
 
 })
 
