@@ -93,7 +93,7 @@ let gameMap = {
           '终点位置：(0, 0)\n' +
           '上下左右：wsad\n' + 
           '剩余生命：3',
-  'WIN': 'YOU WIN !!! :) 期待一下奖品吧红红火火恍恍惚惚',
+  'WIN': 'YOU WIN !!!',
   'LOSE': 'GAME OVER :(',
   GAMING: function ({life, cx, cy}) {
     return `当前位置：(${cx}, ${cy})\n` +
@@ -169,7 +169,7 @@ bot.on('message', async function(msg) {
     // 游戏已开始
     if (startedSenders.hasOwnProperty(sender.id)) {
       if (startedSenders[sender.id].win) {
-        await msg.say('赢了就别来找我了')
+        await msg.say('赢了就别来找我了 没有奖品')
         return 
       }
       let res = runOps(text, startedSenders[sender.id].cx, startedSenders[sender.id].cy)
@@ -190,7 +190,7 @@ bot.on('message', async function(msg) {
       startedSenders[sender.id] = {
         cx: 2,
         cy: 4,
-        life: 3,
+        life: 2,
         win: false
       }
       await msg.say(gameMap.START)

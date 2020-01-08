@@ -17,9 +17,7 @@ function getNeibors(x, y) {
   if (x === 0) {
     switch (y) {
       case 0:
-        w = s = NEIBOR.wall
-        a = NEIBOR.exit
-        d = NEIBOR.empty
+        w = s = d = a = NEIBOR.wall
         break;
       case 1:
         w = a = NEIBOR.wall
@@ -47,7 +45,8 @@ function getNeibors(x, y) {
     switch (y) {
       case 0:
         w = s = NEIBOR.wall
-        d = a = NEIBOR.empty
+        d = NEIBOR.empty
+        a = NEIBOR.exit
         break;
       case 1:
         w = NEIBOR.wall
